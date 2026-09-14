@@ -1,0 +1,37 @@
+{
+  "name": "EnterpriseDB",
+  "tables": [
+    {
+      "name": "Schedules",
+      "columns": [
+        {
+          "name": "worker",
+          "type": "string"
+        },
+        {
+          "name": "employee_id",
+          "type": "integer"
+        },
+        {
+          "name": "shift",
+          "type": "timeInvl"
+        },
+        {
+          "name": "department",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        {
+          "id": "c3e2004d",
+          "values": [
+            "Іван Коваль",
+            "101",
+            "08:00:00 - 17:00:00",
+            "test"
+          ]
+        }
+      ]
+    }
+  ]
+}

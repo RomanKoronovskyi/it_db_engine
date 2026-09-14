@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таблична СУБД</title>
+    <style>
+        :root {
+            --bg: #F8FAFC;
+            --card: #FFFFFF;
+            --border: #E2E8F0;
+            --primary: #2563EB;
+            --primary-hover: #1D4ED8;
+            --danger: #DC2626;
+            --danger-bg: #FEE2E2;
+            --text: #0F172A;
+            --muted: #64748B;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        #db-indicator {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 16px;
+            gap: 16px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+        }
+
+        .sidebar-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table-list {
+            list-style: none;
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 12px;
+        }
+
+        .table-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .table-item:hover {
+            background: #F1F5F9;
+        }
+
+        .table-item.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .content {
+            flex: 1;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: none;
+            background: #F1F5F9;
+            color: var(--text);
+            transition: 0.15s;
+        }
+
+        button:hover {
+            background: #E2E8F0;
+        }
+
+        button.btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        button.btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        button.btn-danger {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        button.btn-danger:hover {
+            background: #FECACA;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: #F8FAFC;
+            color: #475569;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #F8FAFC;
+        }
+
+        tr.selected {
+            background: #EFF6FF;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 360px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .modal h3 {
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Таблична СУБД</h1>
+        <div id="db-indicator">База даних: ...</div>
+    </header>
+
+    <div class="main-layout">
+        <aside class="sidebar">
+            <div class="sidebar-title">Таблиці</div>
+            <ul class="table-list" id="tables-list"></ul>
+            <div class="btn-group">
+                <button onclick="promptCreateTable()" style="flex:1;">+ Таблиця</button>
+                <button onclick="deleteCurrentTable()" class="btn-danger">Видалити</button>
+            </div>
+        </aside>
+
+        <main class="content">
+            <div class="toolbar">
+                <div class="btn-group">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--muted);">Схема:</span>
+                    <button onclick="openAddColModal()">Додати колонку</button>
+                    <button onclick="openRenameColModal()">Перейменувати</button>
+                    <button onclick="openSwapColsModal()" class="btn-primary">Переставити місцями</button>
+                </div>
+                <div class="btn-group">
+                    <button onclick="openRowModal()" class="btn-primary">Додати запис</button>
+                    <button onclick="editSelectedRow()">Редагувати</button>
+                    <button onclick="deleteSelectedRow()" class="btn-danger">Видалити</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="data-table">
+                    <thead id="table-head"></thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div id="modal-backdrop" class="modal-backdrop">
+        <div class="modal" id="modal-container"></div>
+    </div>
+
+    <script>
+        let currentTable = "";
+        let tableData = { columns: [], rows: [] };
+        let selectedRowId = null;
+
+        async function init() {
+            const res = await fetch("/api/state");
+            const data = await res.json();
+            document.getElementById("db-indicator").innerText = "Активна БД: " + data.db_name;
+            renderSidebar(data.tables);
+            if (data.tables.length > 0) {
+                selectTable(data.tables[0]);
+            }
+        }
+
+        function renderSidebar(tables) {
+            const list = document.getElementById("tables-list");
+            list.innerHTML = "";
+            tables.forEach(name => {
+                const li = document.createElement("li");
+                li.className = "table-item" + (name === currentTable ? " active" : "");
+                li.innerText = name;
+                li.onclick = () => selectTable(name);
+                list.appendChild(li);
+            });
+        }
+
+        async function selectTable(name) {
+            currentTable = name;
+            selectedRowId = null;
+            document.querySelectorAll(".table-item").forEach(el => {
+                el.classList.toggle("active", el.innerText === name);
+            });
+            const res = await fetch(`/api/tables/${name}`);
+            tableData = await res.json();
+            renderGrid();
+        }
+
+        function renderGrid() {
+            const thead = document.getElementById("table-head");
+            const tbody = document.getElementById("table-body");
+            thead.innerHTML = "";
+            tbody.innerHTML = "";
+
+            if (!tableData.columns || tableData.columns.length === 0) {
+                thead.innerHTML = "<tr><th style='text-align:center;'>У таблиці ще немає колонок</th></tr>";
+                return;
+            }
+
+            const trHead = document.createElement("tr");
+            tableData.columns.forEach(col => {
+                const th = document.createElement("th");
+                th.innerText = `${col.name} (${col.type})`;
+                trHead.appendChild(th);
+            });
+            thead.appendChild(trHead);
+
+            tableData.rows.forEach(r => {
+                const tr = document.createElement("tr");
+                if (r.id === selectedRowId) tr.className = "selected";
+                tr.onclick = () => {
+                    selectedRowId = r.id;
+                    renderGrid();
+                };
+                r.values.forEach(v => {
+                    const td = document.createElement("td");
+                    td.innerText = v;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function promptCreateTable() {
+            const name = prompt("Введіть назву нової таблиці:");
+            if (!name) return;
+            const res = await fetch("/api/tables", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({name: name.trim()})
+            });
+            const data = await res.json();
+            if (res.ok) {
+                const state = await (await fetch("/api/state")).json();
+                renderSidebar(state.tables);
+                selectTable(name.trim());
+            } else {
+                alert(data.error);
+            }
+        }
+
+        async function deleteCurrentTable() {
+            if (!currentTable || !confirm(`Видалити таблицю ${currentTable}?`)) return;
+            await fetch(`/api/tables/${currentTable}`, {method: "DELETE"});
+            const state = await (await fetch("/api/state")).json();
+            renderSidebar(state.tables);
+            selectTable(state.tables[0] || "");
+        }
+
+        function closeModal() {
+            document.getElementById("modal-backdrop").style.display = "none";
+        }
+
+        function openModal(html) {
+            document.getElementById("modal-container").innerHTML = html;
+            document.getElementById("modal-backdrop").style.display = "flex";
+        }
+
+        function openAddColModal() {
+            if (!currentTable) return alert("Оберіть таблицю");
+            openModal(`
+                <h3>Додати колонку</h3>
+                <div class="form-group">
+                    <label>Назва колонки</label>
+                    <input id="modal-col-name" type="text">
+                </div>
+                <div class="form-group">
+                    <label>Тип даних</label>
+                    <select id="modal-col-type">
+                        <option value="integer">integer</option>
+                        <option value="real">real</option>
+                        <option value="char">char</option>
+                        <option value="string">string</option>
+                        <option value="time">time</option>
+                        <option value="timeInvl">timeInvl</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button onclick="closeModal()">Скасувати</button>
+                    <button class="btn-primary" onclick="submitAddCol()">Створити</button>
+                </div>
+            `);
+        }
+
+        async function submitAddCol() {
+            const name = document.getElementById("modal-col-name").value;
+            const data_type = document.getElementById("modal-col-type").value;
+            const res = await fetch(`/api/tables/${currentTable}/columns`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({name, data_type})
+            });
+            const data = await res.json();
+            if (res.ok) { closeModal(); selectTable(currentTable); }
+            else { alert(data.error); }
+        }
+
+        function openRenameColModal() {
+            if (!currentTable || tableData.columns.length === 0) return alert("Немає колонок");
+            const options = tableData.columns.map((c, i) => `<option value="${i}">${i}:${c.name}</option>`).join("");
+            openModal(`
+                <h3>Перейменувати колонку</h3>
+                <div class="form-group">
+                    <label>Оберіть колонку</label>
+                    <select id="modal-rename-idx">${options}</select>
+                </div>
+                <div class="form-group">
+                    <label>Нова назва</label>
+                    <input id="modal-rename-name" type="text">
+                </div>
+                <div class="modal-actions">
+                    <button onclick="closeModal()">Скасувати</button>
+                    <button class="btn-primary" onclick="submitRenameCol()">Зберегти</button>
+                </div>
+            `);
+        }
+
+        async function submitRenameCol() {
+            const col_index = parseInt(document.getElementById("modal-rename-idx").value);
+            const new_name = document.getElementById("modal-rename-name").value;
+            const res = await fetch(`/api/tables/${currentTable}/columns/rename`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({col_index, new_name})
+            });
+            const data = await res.json();
+            if (res.ok) { closeModal(); selectTable(currentTable); }
+            else { alert(data.error); }
+        }
+
+        function openSwapColsModal() {
+            if (!currentTable || tableData.columns.length < 2) return alert("Потрібно щонайменше 2 колонки");
+            const optionsA = tableData.columns.map((c, i) => `<option value="${i}">${i}:${c.name}</option>`).join("");
+            const optionsB = tableData.columns.map((c, i) => `<option value="${i}" ${i === 1 ? "selected" : ""}>${i}:${c.name}</option>`).join("");
+            openModal(`
+                <h3>Перестановка колонок місцями</h3>
+                <div class="form-group">
+                    <label>Колонка 1</label>
+                    <select id="modal-swap-a">${optionsA}</select>
+                </div>
+                <div class="form-group">
+                    <label>Колонка 2</label>
+                    <select id="modal-swap-b">${optionsB}</select>
+                </div>
+                <div class="modal-actions">
+                    <button onclick="closeModal()">Скасувати</button>
+                    <button class="btn-primary" onclick="submitSwapCols()">Поміняти</button>
+                </div>
+            `);
+        }
+
+        async function submitSwapCols() {
+            const index_a = parseInt(document.getElementById("modal-swap-a").value);
+            const index_b = parseInt(document.getElementById("modal-swap-b").value);
+            const res = await fetch(`/api/tables/${currentTable}/columns/swap`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({index_a, index_b})
+            });
+            const data = await res.json();
+            if (res.ok) { closeModal(); selectTable(currentTable); }
+            else { alert(data.error); }
+        }
+
+        function openRowModal(existingRow = null) {
+            if (!currentTable || tableData.columns.length === 0) return alert("Створіть колонки");
+            let fields = "";
+            tableData.columns.forEach((c, idx) => {
+                const val = existingRow ? existingRow.values[idx] : "";
+                const hint = c.type === "timeInvl" ? " (HH:MM:SS - HH:MM:SS)" : "";
+                fields += `
+                    <div class="form-group">
+                        <label>${c.name} [${c.type}]${hint}</label>
+                        <input class="modal-row-val" data-idx="${idx}" value="${val}">
+                    </div>
+                `;
+            });
+            openModal(`
+                <h3>${existingRow ? "Редагувати рядок" : "Додати новий рядок"}</h3>
+                ${fields}
+                <div class="modal-actions">
+                    <button onclick="closeModal()">Скасувати</button>
+                    <button class="btn-primary" onclick="submitRow('${existingRow ? existingRow.id : ""}')">Підтвердити</button>
+                </div>
+            `);
+        }
+
+        async function submitRow(rowId) {
+            const inputs = document.querySelectorAll(".modal-row-val");
+            const values = Array.from(inputs).map(inp => inp.value);
+            const endpoint = rowId ? `/api/tables/${currentTable}/rows/${rowId}` : `/api/tables/${currentTable}/rows`;
+            const method = rowId ? "PUT" : "POST";
+
+            const res = await fetch(endpoint, {
+                method: method,
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({values})
+            });
+            const data = await res.json();
+            if (res.ok) { closeModal(); selectTable(currentTable); }
+            else { alert(data.error); }
+        }
+
+        function editSelectedRow() {
+            if (!selectedRowId) return alert("Оберіть рядок для редагування");
+            const row = tableData.rows.find(r => r.id === selectedRowId);
+            if (row) openRowModal(row);
+        }
+
+        async function deleteSelectedRow() {
+            if (!selectedRowId || !confirm("Видалити обраний запис?")) return;
+            await fetch(`/api/tables/${currentTable}/rows/${selectedRowId}`, {method: "DELETE"});
+            selectTable(currentTable);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
