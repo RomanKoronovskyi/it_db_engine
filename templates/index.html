@@ -275,6 +275,7 @@
                     <button onclick="openAddColModal()">Додати колонку</button>
                     <button onclick="openRenameColModal()">Перейменувати</button>
                     <button onclick="openSwapColsModal()" class="btn-primary">Переставити місцями</button>
+                    <button onclick="openDeleteColModal()" class="btn-danger">Видалити колонку</button>
                 </div>
                 <div class="btn-group">
                     <button onclick="openRowModal()" class="btn-primary">Додати запис</button>
@@ -504,6 +505,32 @@
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({index_a, index_b})
+            });
+            const data = await res.json();
+            if (res.ok) { closeModal(); selectTable(currentTable); }
+            else { alert(data.error); }
+        }
+
+        function openDeleteColModal() {
+            if (!currentTable || tableData.columns.length === 0) return alert("Немає колонок");
+            const options = tableData.columns.map((c, i) => `<option value="${i}">${i}:${c.name}</option>`).join("");
+            openModal(`
+                <h3>Видалити колонку</h3>
+                <div class="form-group">
+                    <label>Оберіть колонку</label>
+                    <select id="modal-delete-col-idx">${options}</select>
+                </div>
+                <div class="modal-actions">
+                    <button onclick="closeModal()">Скасувати</button>
+                    <button class="btn-danger" onclick="submitDeleteCol()">Видалити</button>
+                </div>
+            `);
+        }
+
+        async function submitDeleteCol() {
+            const col_index = parseInt(document.getElementById("modal-delete-col-idx").value);
+            const res = await fetch(`/api/tables/${currentTable}/columns/${col_index}`, {
+                method: "DELETE"
             });
             const data = await res.json();
             if (res.ok) { closeModal(); selectTable(currentTable); }

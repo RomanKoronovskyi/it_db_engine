@@ -132,6 +132,18 @@ class Table:
         for row in self.rows:
             row.values.append(default_value)
 
+    def delete_column(self, col_index: int):
+        if not (0 <= col_index < len(self.columns)):
+            raise IndexError("Некоректний індекс колонки")
+
+        self.columns.pop(col_index)
+
+        for row in self.rows:
+            row.values.pop(col_index)
+
+        if not self.columns:
+            self.rows.clear()
+
     def add_row(self, raw_values: List[Any]) -> Row:
         if len(raw_values) != len(self.columns):
             raise ValueError(

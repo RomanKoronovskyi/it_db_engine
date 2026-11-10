@@ -106,6 +106,18 @@ def swap_columns(table_name: str):
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+@app.route("/api/tables/<table_name>/columns/<int:col_index>", methods=["DELETE"])
+def delete_column(table_name: str, col_index: int):
+    table = db.get_table(table_name)
+    if not table:
+        return jsonify({"error": "Таблицю не знайдено"}), 404
+    try:
+        table.delete_column(col_index)
+        db.save_to_file(DB_FILE)
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 @app.route("/api/tables/<table_name>/rows", methods=["POST"])
 def add_row(table_name: str):
     table = db.get_table(table_name)

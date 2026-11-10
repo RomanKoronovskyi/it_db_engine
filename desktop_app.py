@@ -113,6 +113,7 @@ class DesktopApp(tk.Tk):
         self._btn(schema_bar, "Додати колонку", self.action_add_column).pack(side=tk.LEFT, padx=3)
         self._btn(schema_bar, "Перейменувати", self.action_rename_column).pack(side=tk.LEFT, padx=3)
         self._btn(schema_bar, "Переставити місцями", self.action_swap_columns, bg="#EEF2FF", fg=self.COLOR_PRIMARY).pack(side=tk.LEFT, padx=3)
+        self._btn(schema_bar, "Видалити колонку", self.action_delete_column, bg="#FEE2E2", fg=self.COLOR_DANGER).pack(side=tk.LEFT, padx=3)
 
         grid_container = tk.Frame(right_card, bg=self.COLOR_CARD, highlightthickness=1, highlightbackground=self.COLOR_BORDER)
         grid_container.pack(fill=tk.BOTH, expand=True)
@@ -329,6 +330,33 @@ class DesktopApp(tk.Tk):
                 messagebox.showerror("Помилка", str(e))
 
         self._btn(dialog, "Поміняти місцями", submit, bg=self.COLOR_PRIMARY, fg="#FFFFFF").pack(pady=12)
+
+    def action_delete_column(self):
+        table = self.db.get_table(self.current_table_name)
+        if not table or not table.columns:
+            messagebox.showwarning("Увага", "У таблиці немає колонок")
+            return
+
+        dialog = tk.Toplevel(self)
+        dialog.title("Видалити колонку")
+        dialog.geometry("320x140")
+        dialog.configure(bg=self.COLOR_CARD)
+
+        col_names = [f"{idx}: {col.name}" for idx, col in enumerate(table.columns)]
+        tk.Label(dialog, text="Оберіть колонку для видалення:", bg=self.COLOR_CARD).pack(pady=(12, 4))
+        col_cb = ttk.Combobox(dialog, values=col_names, state="readonly")
+        col_cb.current(0)
+        col_cb.pack(fill=tk.X, padx=20)
+
+        def submit():
+            try:
+                table.delete_column(col_cb.current())
+                dialog.destroy()
+                self._render_table_view()
+            except Exception as e:
+                messagebox.showerror("Помилка", str(e))
+
+        self._btn(dialog, "Видалити", submit, bg=self.COLOR_DANGER, fg="#FFFFFF").pack(pady=14)
 
     def action_add_row(self):
         table = self.db.get_table(self.current_table_name)
